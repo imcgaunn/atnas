@@ -32,12 +32,21 @@
     $('#match').click(function() {
         var table = $('#participants tbody');
         var people = [];
+        var matches = [];
 
         if (table.find('tr').length > 0) {
             people = getPeople(table);
         }
 
-        findMatches(people);
+        // if people < 2, findMatches will loop forever
+        if (people.length >= 2) {
+            matches = findMatches(people);
+
+            for (var i = 0; i < matches.length; i++) {
+                sendMail(matches[i]);
+            }
+            
+        };
     });
 
     function getPeople(table) {
@@ -81,17 +90,62 @@
             }
         }
 
-        console.log('copy: ');
-        console.log(peopleCopy);
+        // console.log('copy: ');
+        // console.log(peopleCopy);
 
-        console.log('original: ');
-        console.log(people);
+        // console.log('original: ');
+        // console.log(people);
+
+        for (i = 0; i < people.length; i++) {
+            matches.push({'atnas': people[i], 'child': peopleCopy[i]});
+        }
+
+        return matches;
+    }
+
+    function sendMail(pairing) {
+
+        var atnasName = pairing.atnas.name;
+        var atnasEmail = pairing.atnas.email;
+
+        var pairingName = pairing.child.name;
+        var pairingEmail = pairing.child.email;
+
+        // build a message with the correct names
+        var msg = 'HELLO, ' + atnasName + '\n' +
+            'you have been selected to participate in the annual ' +
+            'Samtsirch gift exchange. This is a great honor. You ' +
+            'shall be providing a gift for the majestic ' + pairingName + '.\n' +
+            'Please make sure you are not getting a terrible gift' +
+            ', because that makes people feel sad.\n\n' +
+            'Sincerely,\nVoidwalker';
 
 
-        // for (i = 0; i < people.length; i++) {
-        //     matches.push({'santa': 
-        // }
-        
+        // builds an AJAX request to send mail through maildrill
+        $.ajax({
+            type: "POST",
+            url: 'https://mandrillapp.com/api/1.0/messages/send.json',
+            data: {
+                'key': 'HxUivpNgtB26DWm79bXFVg',
+                'message': {
+                    'from_email': 'ianmcgaunn@gmail.com',
+                    'from_name': 'Voidwalker Kringle',
+                    'to': [
+                        {
+                            'email': pairingEmail,
+                            'name': pairingName,
+                            'type': 'to'
+                        }
+                    ],
+                    'autotext': 'true',
+                    'subject': 'ATNAS HAS FOUND YOU, HERE IS YOUR DESTINY',
+                    'text': msg
+                }
+            },
+        }).done(function(res) {
+            console.log(res);
+        });
+               
     }
 
     function shuffle(array) {

@@ -112,7 +112,6 @@ gulp.task('build', ['html', 'images', 'fonts', 'extras'], function () {
 gulp.task('deploy', ['build'], function () {
     return gulp.src('dist')
         .pipe($.subtree())
-        .pipe($.clean());
 });
 
 gulp.task('default', ['clean'], function () {
